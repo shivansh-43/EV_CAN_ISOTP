@@ -19,3 +19,5 @@ add_executable(test_isotp
 target_link_libraries(test_isotp isotp)
 add_executable(test_two_contexts examples/test_two_contexts.c)
 target_link_libraries(test_two_contexts isotp)
+add_executable(test_block_size examples/test_block_size.c)
+target_link_libraries(test_block_size isotp)
