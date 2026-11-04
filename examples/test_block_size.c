@@ -108,19 +108,19 @@ static bool can_send(void *user, const IsoTpCanFrame *frame)
         return false;
     }
     /* Count Flow Control frames (PCI type 3, CTS status 0). */
-if (frame->dlc >= 3U &&
-    (frame->data[0] >> 4) == 3U &&
-    (frame->data[0] & 0x0FU) == 0U)
-{
-    if (endpoint->tx_id == 0x7E8U)
-{
-    forward_fc_stats.cts_count++;
-}
-else if (endpoint->tx_id == 0x7E0U)
-{
-    reverse_fc_stats.cts_count++;
-}
-}
+    if (frame->dlc >= 3U &&
+        (frame->data[0] >> 4) == 3U &&
+        (frame->data[0] & 0x0FU) == 0U)
+    {
+        if (endpoint->tx_id == 0x7E8U)
+        {
+            forward_fc_stats.cts_count++;
+        }
+        else if (endpoint->tx_id == 0x7E0U)
+        {
+            reverse_fc_stats.cts_count++;
+        }
+    }
     /* Record Consecutive Frame transmission timestamps. */
     if (frame->dlc == 8U &&
         (frame->data[0] >> 4) == 2U)
@@ -407,7 +407,7 @@ int main(void)
     sender_config.wft_max = 3U;
     sender_config.block_size = 0U;
     sender_config.rx_block_size = 0U;
-    sender_config.st_min = 0U;
+    sender_config.st_min = 0xF1U;
     sender_config.n_bs_timeout_ms = 1000U;
     sender_config.n_cr_timeout_ms = 1000U;
     sender_config.send_frame = can_send;
@@ -474,32 +474,26 @@ int main(void)
     /* REVERSE TRANSFER: 0x7E8 -> 0x7E0                  */
     /* -------------------------------------------------- */
 
-    printf("\n--- REVERSE 1024-BYTE TRANSFER ---\n");
+    /* Verify the receiver advertised Block Size 1 in the forward transfer. */
+    printf("Forward CTS Flow Control frames: %u\n",
+           (unsigned int)forward_fc_stats.cts_count);
 
+    if (forward_fc_stats.cts_count != forward_timing.count)
+    {
+        printf("FAIL: Forward Block Size 1 verification!\n");
+        return 1;
+    }
+
+    printf("PASS: Forward Block Size 1 verified!\n");
+
+    /* Prepare the reverse transfer. */
     reset_bus(&bus);
     reset_result(&sender_received);
     reset_timing(&reverse_timing);
-    printf("Forward CTS Flow Control frames: %u\n",
-       (unsigned int)forward_fc_stats.cts_count);
-       printf("Reverse CTS Flow Control frames: %u\n",
-       (unsigned int)reverse_fc_stats.cts_count);
-       if (forward_fc_stats.cts_count != forward_timing.count)
-{
-    printf("FAIL: Forward Block Size 1 verification!\n");
-    return 1;
-}
 
-printf("PASS: Forward Block Size 1 verified!\n");
-if (reverse_fc_stats.cts_count != reverse_timing.count)
-{
-    printf("FAIL: Reverse Block Size 1 verification!\n");
-    return 1;
-}
-
-printf("PASS: Reverse Block Size 1 verified!\n");
     /*
      * Original sender becomes receiver.
-     * It now advertises BS=8 and STmin=5 ms.
+     * It now advertises BS=1 and STmin=100 us.
      */
     sender.config.rx_block_size = 1U;
     sender.config.st_min = 0xF1U;
@@ -522,6 +516,18 @@ printf("PASS: Reverse Block Size 1 verified!\n");
     }
 
     printf("PASS: Reverse 1024-byte transfer!\n");
+
+    /* Verify the receiver advertised Block Size 1 in the reverse transfer. */
+    printf("Reverse CTS Flow Control frames: %u\n",
+           (unsigned int)reverse_fc_stats.cts_count);
+
+    if (reverse_fc_stats.cts_count != reverse_timing.count)
+    {
+        printf("FAIL: Reverse Block Size 1 verification!\n");
+        return 1;
+    }
+
+    printf("PASS: Reverse Block Size 1 verified!\n");
 
     printf("\nALL TWO-CONTEXT TESTS COMPLETED!\n");
 
