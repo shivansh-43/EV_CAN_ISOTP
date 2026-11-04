@@ -421,22 +421,21 @@ void isotp_on_can_frame(
             context->tx_state = ISOTP_TX_SENDING_CF;
         }
 
-        /* WAIT. */
-      /* WAIT. */
-else if (flow_status == 1U)
-{
-    if (context->tx_wait_count >= context->config.wft_max)
-    {
-        isotp_reset_tx(context);
-        return;
-    }
+            /* WAIT. */
+        else if (flow_status == 1U)
+        {
+            if (context->tx_wait_count >= context->config.wft_max)
+            {
+                isotp_reset_tx(context);
+                return;
+            }
 
-    context->tx_wait_count++;
+            context->tx_wait_count++;
 
-    context->tx_deadline =
-        isotp_now(context) +
-        isotp_timeout_to_us(context->config.n_bs_timeout_ms);
-}
+            context->tx_deadline =
+                isotp_now(context) +
+                isotp_timeout_to_us(context->config.n_bs_timeout_ms);
+        }
 
         /* OVERFLOW or reserved Flow Status. */
         else

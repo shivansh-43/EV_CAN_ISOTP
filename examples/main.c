@@ -180,7 +180,7 @@ int main(void)
 
     printf("TX State after WAIT: %d\n", context.tx_state);
 
-    /* OVERFLOW */
+        /* OVERFLOW */
     printf("\nTesting OVERFLOW...\n");
 
     incoming_frame.data[0] = 0x32;
@@ -191,6 +191,13 @@ int main(void)
 
     printf("TX State after OVERFLOW: %d\n", context.tx_state);
 
+    if (context.tx_state != ISOTP_TX_IDLE)
+    {
+        printf("FAIL: OVERFLOW did not reset TX state!\n");
+        return 1;
+    }
+
+    printf("PASS: OVERFLOW reset TX state!\n");
     /* CONSECUTIVE FRAME TRANSMISSION: BS = 1 */
     printf("\n--- BLOCK SIZE = 1 TX TEST ---\n");
 
